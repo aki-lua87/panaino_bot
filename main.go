@@ -13,15 +13,14 @@ import (
 )
 
 var (
-	stopBot           = make(chan bool)
-	vcsession         *discordgo.VoiceConnection
-	HelloWorld        = "うらめしえんたんかわいい"
-	ChannelVoiceJoin  = "!vcjoin"
-	ChannelVoiceLeave = "!vcleave"
+	// Token   = "Bot 別ファイルに記述"
+	// BotName = "<@別ファイルに記述>"
+	stopBot    = make(chan bool)
+	vcsession  *discordgo.VoiceConnection
+	HelloWorld = "うらめしえんたんかわいい"
 )
 
 func main() {
-	//Discordのセッションを作成
 	discord, err := discordgo.New()
 	discord.Token = Token
 	if err != nil {
@@ -29,20 +28,20 @@ func main() {
 		fmt.Println(err)
 	}
 
-	discord.AddHandler(onMessageCreate) //全てのWSAPIイベントが発生した時のイベントハンドラを追加
-	// websocketを開いてlistening開始
+	discord.AddHandler(onMessageCreate)
+	// websocket
 	err = discord.Open()
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	fmt.Println("Listening...")
-	<-stopBot //プログラムが終了しないようロック
+	<-stopBot
 	return
 }
 
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	c, err := s.State.Channel(m.ChannelID) //チャンネル取得
+	c, err := s.State.Channel(m.ChannelID)
 	if err != nil {
 		log.Println("Error getting channel: ", err)
 		return
@@ -50,25 +49,24 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("%20s %20s %20s > %s\n", m.ChannelID, time.Now().Format(time.Stamp), m.Author.Username, m.Content)
 
 	switch {
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, HelloWorld)): //Bot宛に!helloworld コマンドが実行された時
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, HelloWorld)):
 		sendMessage(s, c, "うらめしえんたんかわいい")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")): //Bot宛に!helloworld コマンドが実行された時
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")):
 		sendMessage(s, c, getWether())
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")): //Bot宛に!helloworld コマンドが実行された時
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
 		sendMessage(s, c, "おやす§")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")): //Bot宛に!helloworld コマンドが実行された時
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
 		sendMessage(s, c, "レイストちゃんかわいい")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)): //Bot宛に!helloworld コマンドが実行された時
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
 		sendMessage(s, c, "俺は神")
 	}
 }
 
-//メッセージを受信した時の、声の初めと終わりにPrintされるようだ
 func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingUpdate) {
-	log.Print("しゃべったあああああ")
+
 }
 
-//メッセージを送信する関数
+//メッセージを送信
 func sendMessage(s *discordgo.Session, c *discordgo.Channel, msg string) {
 	_, err := s.ChannelMessageSend(c.ID, msg)
 
@@ -78,6 +76,7 @@ func sendMessage(s *discordgo.Session, c *discordgo.Channel, msg string) {
 	}
 }
 
+// 天気情報取得
 func getWether() string {
 	var text string
 	url := "http://weather.livedoor.com/forecast/webservice/json/v1?city=130010"

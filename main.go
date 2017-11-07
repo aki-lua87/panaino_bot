@@ -15,9 +15,8 @@ import (
 var (
 	// Token   = "Bot 別ファイルに記述"
 	// BotName = "<@別ファイルに記述>"
-	stopBot    = make(chan bool)
-	vcsession  *discordgo.VoiceConnection
-	HelloWorld = "うらめしえんたんかわいい"
+	stopBot   = make(chan bool)
+	vcsession *discordgo.VoiceConnection
 )
 
 func main() {
@@ -49,10 +48,12 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("%20s %20s %20s > %s\n", m.ChannelID, time.Now().Format(time.Stamp), m.Author.Username, m.Content)
 
 	switch {
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, HelloWorld)):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "うらめしえんたんかわいい")):
 		sendMessage(s, c, "うらめしえんたんかわいい")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")):
-		sendMessage(s, c, getWether())
+		sendMessage(s, c, getWether("130010"))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "ちゃんみら天気")):
+		sendMessage(s, c, getWether("410020"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
 		sendMessage(s, c, "おやす§")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
@@ -89,9 +90,9 @@ func sendMessage(s *discordgo.Session, c *discordgo.Channel, msg string) {
 }
 
 // 天気情報取得
-func getWether() string {
+func getWether(id string) string {
 	var text string
-	url := "http://weather.livedoor.com/forecast/webservice/json/v1?city=130010"
+	url := "http://weather.livedoor.com/forecast/webservice/json/v1?city=" + id
 	resp, err := http.Get(url)
 	defer resp.Body.Close()
 	if err != nil {

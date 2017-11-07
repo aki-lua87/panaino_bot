@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -70,6 +71,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "てれめしえんたんちょろいい ")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
 		sendMessage(s, c, "ふぁいあー！！")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "PSO2")):
+		sendMessage(s, c, PSO2())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
 		sendMessage(s, c, "俺は神")
 	}
@@ -110,6 +113,70 @@ func getWether(id string) string {
 	text = weatherData.Description.Text
 
 	return text
+}
+
+func PSO2() string {
+	var postText string
+	postText = fmt.Sprintln("今日の緊急クエストは....")
+
+	t := time.Now()
+
+	getKey := fmt.Sprintf("%d%02d%02d", t.Year(), int(t.Month()), t.Day())
+	l := CnvEmaList(GetEmaList(getKey))
+
+	for _, v := range l {
+		postText = postText + v + " \n"
+	}
+
+	return postText
+}
+func CnvEmaList(emaList []EmaList) []string {
+	var emaListStr []string
+	if emaList == nil {
+		emaListStr = append(emaListStr, "予定なしです。")
+		return emaListStr
+	}
+	for _, v := range emaList {
+		ema := fmt.Sprintf("%02d:%02d %s", v.Hour, v.Minute, v.EventName)
+		emaListStr = append(emaListStr, ema)
+	}
+	return emaListStr
+}
+
+func GetEmaList(getKey string) []EmaList {
+	client := &http.Client{}
+
+	apiurl := "https://akakitune87.net/api/v2/pso2ema"
+
+	req, _ := http.NewRequest(
+		"POST",
+		apiurl,
+		bytes.NewBuffer([]byte(getKey)),
+	)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return GetEmaList(getKey)
+	}
+	defer resp.Body.Close()
+
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+
+	var emaList []EmaList
+	if err := json.Unmarshal(byteArray, &emaList); err != nil {
+		log.Println("Not Emag List", err)
+	}
+
+	return emaList
+}
+
+type EmaList struct {
+	EventName string `json:"evant"`
+	Month     int    `json:"month"`
+	Date      int    `json:"date"`
+	Hour      int    `json:"hour"`
+	Minute    int    `json:"minute"`
 }
 
 type WeatherData struct {

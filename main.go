@@ -57,6 +57,18 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "おやす§")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
 		sendMessage(s, c, "レイストちゃんかわいい")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "ちゃんみら")):
+		sendMessage(s, c, "みらめしえんたんとうとい ")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "致した")):
+		sendMessage(s, c, "いためしえんたんしこいい")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "さかい")):
+		sendMessage(s, c, "はげめしえんたんさむいい ")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おこ？")):
+		sendMessage(s, c, "おこめしえんたんこわいい ")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "かわいいね")):
+		sendMessage(s, c, "てれめしえんたんちょろいい ")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
+		sendMessage(s, c, "ふぁいあー！！")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
 		sendMessage(s, c, "俺は神")
 	}

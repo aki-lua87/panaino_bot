@@ -71,8 +71,10 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "てれめしえんたんちょろいい ")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
 		sendMessage(s, c, "ふぁいあー！！")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "PSO2")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
 		sendMessage(s, c, PSO2())
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "-help")):
+		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
 		sendMessage(s, c, "俺は神")
 	}
@@ -80,6 +82,14 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingUpdate) {
 
+}
+
+func help() string {
+	return `以下のメンションを投げると反応してくれるよ
+
+	天気 : 関東の天気情報を表示します。
+	天気福岡 : ちゃんみら付近の天気情報を表示します。
+	緊急 : 今日の緊急を表示します。`
 }
 
 //メッセージを送信
@@ -122,6 +132,7 @@ func PSO2() string {
 	t := time.Now()
 
 	getKey := fmt.Sprintf("%d%02d%02d", t.Year(), int(t.Month()), t.Day())
+	log.Println("Key => ", getKey)
 	l := CnvEmaList(GetEmaList(getKey))
 
 	for _, v := range l {
@@ -147,21 +158,29 @@ func GetEmaList(getKey string) []EmaList {
 	client := &http.Client{}
 
 	apiurl := "https://akakitune87.net/api/v2/pso2ema"
+	// apiurl := "https://kp822ivqfe.execute-api.ap-northeast-1.amazonaws.com/pso2emaget"
 
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		apiurl,
-		bytes.NewBuffer([]byte(getKey)),
+		bytes.NewBuffer([]byte(`"`+getKey+`"`)),
 	)
+	if err != nil {
+		log.Println("aaaaaaaaaaaaaaaaaa", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return GetEmaList(getKey)
+		log.Println("Not Emag Get", err)
 	}
 	defer resp.Body.Close()
 
-	byteArray, _ := ioutil.ReadAll(resp.Body)
+	byteArray, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("は？？？？", err)
+	}
+	log.Println("ふぅ・・・ ＝＞", string(byteArray))
 
 	var emaList []EmaList
 	if err := json.Unmarshal(byteArray, &emaList); err != nil {

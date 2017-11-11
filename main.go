@@ -127,7 +127,7 @@ func getWether(id string) string {
 	return text
 }
 
-func PSO2(t Time) string {
+func PSO2(t time.Time) string {
 	var postText string
 	postText = fmt.Sprintln("今日の緊急クエストは....")
 

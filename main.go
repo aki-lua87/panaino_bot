@@ -72,7 +72,9 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
 		sendMessage(s, c, "ふぁいあー！！")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
-		sendMessage(s, c, PSO2())
+		sendMessage(s, c, PSO2(time.Now()))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急明日")):
+		sendMessage(s, c, PSO2(time.Now().Add(time.Hour*9)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "-help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
@@ -85,7 +87,7 @@ func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingU
 }
 
 func help() string {
-	return `以下のメンションを投げると反応してくれるよ
+	return `@うらめしえんたんかわいいBotで以下のメンションを投げると反応してくれるよ
 
 	天気 : 関東の天気情報を表示します。
 	天気福岡 : ちゃんみら付近の天気情報を表示します。
@@ -125,11 +127,9 @@ func getWether(id string) string {
 	return text
 }
 
-func PSO2() string {
+func PSO2(t Time) string {
 	var postText string
 	postText = fmt.Sprintln("今日の緊急クエストは....")
-
-	t := time.Now()
 
 	getKey := fmt.Sprintf("%d%02d%02d", t.Year(), int(t.Month()), t.Day())
 	log.Println("Key => ", getKey)

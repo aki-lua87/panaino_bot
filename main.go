@@ -71,10 +71,10 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "てれめしえんたんちょろいい ")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
 		sendMessage(s, c, "ふぁいあー！！")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
-		sendMessage(s, c, PSO2(time.Now()))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急明日")):
 		sendMessage(s, c, PSO2(time.Now().Add(time.Hour*9)))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
+		sendMessage(s, c, PSO2(time.Now()))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "-help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):

@@ -57,8 +57,7 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡天気")):
 		sendMessage(s, c, getWether("410020"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):
-		rand.Seed(time.Now().UnixNano())
-		sendMessage(s, c, GeoTest(rand.Intn(180), rand.Intn(180)))
+		sendMessage(s, c, GeoTest())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
 		sendMessage(s, c, "おやす§")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
@@ -133,9 +132,14 @@ func getWether(id string) string {
 	return text
 }
 
-func GeoTest(lat, lon int) string {
+func GeoTest() string {
+	rand.Seed(time.Now().UnixNano())
+	lat := rand.Intn(180)
+	ulat := rand.Intn(99999)
+	lon := rand.Intn(180)
+	ulon := rand.Intn(99999)
 	url := "https://maps.googleapis.com/maps/api/geocode/json?"
-	latlon := fmt.Sprintf("latlng=%d.00000,%d.00000&key=%s", lat, lon, GeoAPI)
+	latlon := fmt.Sprintf("latlng=%d.%05d,%d.%5d&key=%s", lat, ulat, lon, ulon, GeoAPI)
 	return url + latlon
 }
 

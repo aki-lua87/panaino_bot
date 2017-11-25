@@ -134,8 +134,8 @@ func getWether(id string) string {
 }
 
 func GeoTest(lat, lon int) string {
-	url := "https://maps.googleapis.com/maps/api/geocode/json?l"
-	latlon := fmt.Sprintf("latlng=%d,%d&key=%s", lat, lon, GeoAPI)
+	url := "https://maps.googleapis.com/maps/api/geocode/json?"
+	latlon := fmt.Sprintf("latlng=%d.00000,%d.00000&key=%s", lat, lon, GeoAPI)
 	return url + latlon
 }
 

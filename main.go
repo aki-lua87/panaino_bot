@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -53,8 +54,11 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "うらめしえんたんかわいい")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")):
 		sendMessage(s, c, getWether("130010"))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "ちゃんみら天気")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡天気")):
 		sendMessage(s, c, getWether("410020"))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):
+		rand.Seed(time.Now().UnixNano())
+		sendMessage(s, c, GeoTest(rand.Intn(180), rand.Intn(180)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
 		sendMessage(s, c, "おやす§")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
@@ -71,11 +75,11 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "てれめしえんたんちょろいい ")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
 		sendMessage(s, c, "ふぁいあー！！")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急明日")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "明日の緊急")):
 		sendMessage(s, c, PSO2(time.Now().Add(time.Hour*9)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
 		sendMessage(s, c, PSO2(time.Now()))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "-help")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
 		sendMessage(s, c, "俺は神")
@@ -90,8 +94,10 @@ func help() string {
 	return `@うらめしえんたんかわいいBotで以下のメンションを投げると反応してくれるよ
 
 	天気 : 関東の天気情報を表示します。
-	天気福岡 : ちゃんみら付近の天気情報を表示します。
-	緊急 : 今日の緊急を表示します。`
+	福岡天気 : ちゃんみら付近の天気情報を表示します。
+	緊急 : 今日の緊急を表示します。
+	明日の緊急 : 今日の緊急を表示します。
+	`
 }
 
 //メッセージを送信
@@ -127,6 +133,12 @@ func getWether(id string) string {
 	return text
 }
 
+func GeoTest(lat, lon int) string {
+	url := "https://maps.googleapis.com/maps/api/geocode/json?l"
+	latlon := fmt.Sprintf("latlng=%d,%d&key=%s", lat, lon, GeoAPI)
+	return url + latlon
+}
+
 func PSO2(t time.Time) string {
 	var postText string
 	postText = fmt.Sprintln("今日の緊急クエストは....")
@@ -158,16 +170,12 @@ func GetEmaList(getKey string) []EmaList {
 	client := &http.Client{}
 
 	apiurl := "https://akakitune87.net/api/v2/pso2ema"
-	// apiurl := "https://kp822ivqfe.execute-api.ap-northeast-1.amazonaws.com/pso2emaget"
 
 	req, err := http.NewRequest(
 		"POST",
 		apiurl,
 		bytes.NewBuffer([]byte(`"`+getKey+`"`)),
 	)
-	if err != nil {
-		log.Println("aaaaaaaaaaaaaaaaaa", err)
-	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -177,10 +185,6 @@ func GetEmaList(getKey string) []EmaList {
 	defer resp.Body.Close()
 
 	byteArray, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("は？？？？", err)
-	}
-	log.Println("ふぅ・・・ ＝＞", string(byteArray))
 
 	var emaList []EmaList
 	if err := json.Unmarshal(byteArray, &emaList); err != nil {

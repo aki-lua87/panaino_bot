@@ -134,9 +134,9 @@ func getWether(id string) string {
 
 func GeoTest() string {
 	rand.Seed(time.Now().UnixNano())
-	lat := rand.Intn(180)
+	lat := rand.Intn(31)+122
 	ulat := rand.Intn(99999)
-	lon := rand.Intn(180)
+	lon := rand.Intn(25)+20
 	ulon := rand.Intn(99999)
 	url := "https://maps.googleapis.com/maps/api/geocode/json?"
 	latlon := fmt.Sprintf("latlng=%d.%05d,%d.%5d&key=%s", lat, ulat, lon, ulon, GeoAPI)

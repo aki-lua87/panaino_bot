@@ -81,7 +81,7 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
-		sendMessage(s, c, "俺は神")
+		sendMessage(s, c, "まるい")
 	}
 }
 
@@ -95,7 +95,7 @@ func help() string {
 	天気 : 関東の天気情報を表示します。
 	福岡天気 : ちゃんみら付近の天気情報を表示します。
 	緊急 : 今日の緊急を表示します。
-	明日の緊急 : 今日の緊急を表示します。
+	明日の緊急 : 明日の緊急を表示します。
 	`
 }
 
@@ -134,12 +134,12 @@ func getWether(id string) string {
 
 func GeoTest() string {
 	rand.Seed(time.Now().UnixNano())
-	lat := rand.Intn(31)+122
+	lat := rand.Intn(15) + 130
 	ulat := rand.Intn(99999)
-	lon := rand.Intn(25)+20
+	lon := rand.Intn(8) + 30
 	ulon := rand.Intn(99999)
 	url := "https://maps.googleapis.com/maps/api/geocode/json?"
-	latlon := fmt.Sprintf("latlng=%d.%05d,%d.%5d&key=%s", lat, ulat, lon, ulon, GeoAPI)
+	latlon := fmt.Sprintf("latlng=%d.%07d,%d.%07d&key=%s", lat, ulat, lon, ulon, GeoAPI)
 	return url + latlon
 }
 

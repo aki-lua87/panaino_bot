@@ -53,9 +53,13 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "うらめしえんたんかわいい")):
 		sendMessage(s, c, "うらめしえんたんかわいい")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")):
-		sendMessage(s, c, getWether("130010"))
+		sendMessage(s, c, GetWether("130010"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡天気")):
-		sendMessage(s, c, getWether("410020"))
+		sendMessage(s, c, GetWether("410020"))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "明日の緊急")):
+		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*9)))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
+		sendMessage(s, c, PSO2("今日", time.Now()))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):
 		sendMessage(s, c, GeoTest())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
@@ -74,14 +78,10 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, "てれめしえんたんちょろいい ")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
 		sendMessage(s, c, "ふぁいあー！！")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "明日の緊急")):
-		sendMessage(s, c, PSO2(time.Now().Add(time.Hour*9)))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
-		sendMessage(s, c, PSO2(time.Now()))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
-		sendMessage(s, c, "まるい")
+		sendMessage(s, c, randMessege())
 	}
 }
 
@@ -90,13 +90,24 @@ func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingU
 }
 
 func help() string {
-	return `@うらめしえんたんかわいいBotで以下のメンションを投げると反応してくれるよ
+	return `以下のメンションを投げると反応してくれるよ
 
 	天気 : 関東の天気情報を表示します。
-	福岡天気 : ちゃんみら付近の天気情報を表示します。
+	福岡天気 : ちゃんみらの家付近の天気情報を表示します。
 	緊急 : 今日の緊急を表示します。
 	明日の緊急 : 明日の緊急を表示します。
 	`
+}
+
+func randMessege() string {
+	var messageList []string
+	rand.Seed(time.Now().UnixNano())
+	// 基本まるめし構文
+	messageList = append(messageList, "まるい", "り", "それ")
+	// スタンプ
+	messageList = append(messageList, ":marumeshi: ", ":moyai: ", ":marui: ")
+	randNum := rand.Intn(len(messageList))
+	return messageList[randNum]
 }
 
 //メッセージを送信
@@ -107,29 +118,6 @@ func sendMessage(s *discordgo.Session, c *discordgo.Channel, msg string) {
 	if err != nil {
 		log.Println("Error sending message: ", err)
 	}
-}
-
-// 天気情報取得
-func getWether(id string) string {
-	var text string
-	url := "http://weather.livedoor.com/forecast/webservice/json/v1?city=" + id
-	resp, err := http.Get(url)
-	defer resp.Body.Close()
-	if err != nil {
-		log.Println("Error1: ", err)
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	var weatherData WeatherData
-	err = json.Unmarshal(body, &weatherData)
-	if err != nil {
-		log.Println("Error2: ", err)
-	}
-
-	log.Println(weatherData.Description.Text)
-
-	text = weatherData.Description.Text
-
-	return text
 }
 
 func GeoTest() string {
@@ -143,9 +131,9 @@ func GeoTest() string {
 	return url + latlon
 }
 
-func PSO2(t time.Time) string {
+func PSO2(date string, t time.Time) string {
 	var postText string
-	postText = fmt.Sprintln("今日の緊急クエストは....")
+	postText = fmt.Sprintln(date + "の緊急クエストは....")
 
 	getKey := fmt.Sprintf("%d%02d%02d", t.Year(), int(t.Month()), t.Day())
 	log.Println("Key => ", getKey)
@@ -159,7 +147,7 @@ func PSO2(t time.Time) string {
 }
 func CnvEmaList(emaList []EmaList) []string {
 	var emaListStr []string
-	if emaList == nil {
+	if len(emaList) == 0 {
 		emaListStr = append(emaListStr, "予定なしです。")
 		return emaListStr
 	}
@@ -204,64 +192,4 @@ type EmaList struct {
 	Date      int    `json:"date"`
 	Hour      int    `json:"hour"`
 	Minute    int    `json:"minute"`
-}
-
-type WeatherData struct {
-	Location         Location
-	Title            string
-	Link             string
-	PublicTime       string
-	Description      Description
-	Forecasts        []Forecasts
-	PinpointLocation []PinpointLocation
-	Copyright        Copyright
-}
-
-type Location struct {
-	Area string
-	Pref string
-	City string
-}
-
-type Description struct {
-	Text       string
-	PublicTime string
-}
-
-type Forecasts struct {
-	Date        string
-	DateLabel   string
-	Telop       string
-	Image       Image
-	Temperature Temperature
-}
-
-type Image struct {
-	Title  string
-	Link   string
-	Url    string
-	Width  int
-	Height int
-}
-
-type Temperature struct {
-	Celsius    MaxMin
-	Fahrenheit MaxMin
-}
-
-type MaxMin struct {
-	Max string
-	Min string
-}
-
-type PinpointLocation struct {
-	Name string
-	Link string
-}
-
-type Copyright struct {
-	Title    string
-	Link     string
-	Image    Image
-	Provider string
 }

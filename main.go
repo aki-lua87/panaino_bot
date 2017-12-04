@@ -103,9 +103,9 @@ func randMessege() string {
 	var messageList []string
 	rand.Seed(time.Now().UnixNano())
 	// 基本まるめし構文
-	messageList = append(messageList, "まるい", "り", "それ")
+	messageList = append(messageList, "まるい", "り", "それ", "そり～～～～", "まるめし", "まるくなりたい")
 	// スタンプ
-	messageList = append(messageList, ":marumeshi: ", ":moyai: ", ":marui: ")
+	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
 	randNum := rand.Intn(len(messageList))
 	return messageList[randNum]
 }

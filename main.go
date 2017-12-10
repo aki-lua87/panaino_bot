@@ -60,8 +60,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*9)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):
-		sendMessage(s, c, GeoTest())
+	// case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):
+	// 	sendMessage(s, c, GeoTest())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
 		sendMessage(s, c, "おやす§")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
@@ -103,9 +103,11 @@ func randMessege() string {
 	var messageList []string
 	rand.Seed(time.Now().UnixNano())
 	// 基本まるめし構文
-	messageList = append(messageList, "まるい", "り", "それ", "そり～～～～", "まるめし", "まるくなりたい")
+	messageList = append(messageList, "まるい", "り", "それ", "そり", "まるめし", "まるくなりたい", "……。", "ぬくい", "んまー", "マ？", "はやめで", "マァ～")
 	// スタンプ
 	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
+	// GOD
+	messageList = append(messageList, "俺は神 ", "まるかめし ", "さむい ")
 	randNum := rand.Intn(len(messageList))
 	return messageList[randNum]
 }

@@ -163,12 +163,13 @@ func CnvEmaList(emaList []EmaList) []string {
 func GetEmaList(getKey string) []EmaList {
 	client := &http.Client{}
 
-	apiurl := "https://akakitune87.net/api/v2/pso2ema"
+	apiurl := "https://akakitune87.net/api/v4/pso2emergency"
 
+	jsonStr := `{"EventDate":"` + getKey + `"}`
 	req, err := http.NewRequest(
 		"POST",
 		apiurl,
-		bytes.NewBuffer([]byte(`"`+getKey+`"`)),
+		bytes.NewBuffer([]byte(jsonStr)),
 	)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -189,9 +190,10 @@ func GetEmaList(getKey string) []EmaList {
 }
 
 type EmaList struct {
-	EventName string `json:"evant"`
-	Month     int    `json:"month"`
-	Date      int    `json:"date"`
-	Hour      int    `json:"hour"`
-	Minute    int    `json:"minute"`
+	EventName string `json:"EventName"`
+	EvantType string `json:"EventType"`
+	Month     int    `json:"Month"`
+	Date      int    `json:"Date"`
+	Hour      int    `json:"Hour"`
+	Minute    int    `json:"Minute"`
 }

@@ -57,7 +57,7 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡天気")):
 		sendMessage(s, c, GetWether("410020"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "明日の緊急")):
-		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*9)))
+		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
 	// case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):

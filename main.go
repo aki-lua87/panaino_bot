@@ -49,6 +49,23 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	fmt.Printf("%20s %20s %20s > %s\n", m.ChannelID, time.Now().Format(time.Stamp), m.Author.Username, m.Content)
 
+	nowTime := time.Now()
+	if nowTime.Month() == 1 {
+		if nowTime.Day() <= 3 {
+			switch {
+			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おみくじ")):
+				sendMessage(s, c, Omikuji())
+				return
+			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "あけおめ")):
+				sendMessage(s, c, "あけおめし")
+				return
+			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "あけましておめでとう")):
+				sendMessage(s, c, "あけおめし")
+				return
+			}
+		}
+	}
+
 	switch {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "うらめしえんたんかわいい")):
 		sendMessage(s, c, "うらめしえんたんかわいい")
@@ -60,8 +77,6 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
-	// case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "geotest")):
-	// 	sendMessage(s, c, GeoTest())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
 		sendMessage(s, c, "おやす§")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
@@ -99,6 +114,15 @@ func help() string {
 	`
 }
 
+func Omikuji() string {
+	var OmikujiList []string
+	rand.Seed(time.Now().UnixNano())
+	// 基本まるめし構文
+	OmikujiList = append(OmikujiList, "大吉", "中吉", "吉", "小吉", "凶", "大凶", "まるめし吉", "はずれ")
+	randNum := rand.Intn(len(OmikujiList))
+	return OmikujiList[randNum]
+}
+
 func randMessege() string {
 	var messageList []string
 	rand.Seed(time.Now().UnixNano())
@@ -120,17 +144,6 @@ func sendMessage(s *discordgo.Session, c *discordgo.Channel, msg string) {
 	if err != nil {
 		log.Println("Error sending message: ", err)
 	}
-}
-
-func GeoTest() string {
-	rand.Seed(time.Now().UnixNano())
-	lat := rand.Intn(15) + 130
-	ulat := rand.Intn(99999)
-	lon := rand.Intn(8) + 30
-	ulon := rand.Intn(99999)
-	url := "https://maps.googleapis.com/maps/api/geocode/json?"
-	latlon := fmt.Sprintf("latlng=%d.%07d,%d.%07d&key=%s", lat, ulat, lon, ulon, GeoAPI)
-	return url + latlon
 }
 
 func PSO2(date string, t time.Time) string {

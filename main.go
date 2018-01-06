@@ -69,10 +69,18 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "うらめしえんたんかわいい")):
 		sendMessage(s, c, "うらめしえんたんかわいい")
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "お昼")):
+		sendMessage(s, c, GetHirumeshi())
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おひる")):
+		sendMessage(s, c, GetHirumeshi())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")):
 		sendMessage(s, c, GetWether("130010"))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡天気")):
-		sendMessage(s, c, GetWether("410020"))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "東京の天気")):
+		sendMessage(s, c, GetWether("130010"))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡の天気")):
+		sendMessage(s, c, GetWether("400040")) // 410020
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "大阪の天気")):
+		sendMessage(s, c, GetWether("270000"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "明日の緊急")):
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
@@ -108,10 +116,19 @@ func help() string {
 	return `以下のメンションを投げると反応してくれるよ
 
 	天気 : 関東の天気情報を表示します。
-	福岡天気 : ちゃんみらの家付近の天気情報を表示します。
+	福岡の天気 : ちゃんみらの家付近の天気情報を表示します。
+	大阪の天気 : 大阪付近の天気情報を表示します。
+	お昼：おひるめしえん
 	緊急 : 今日の緊急を表示します。
 	明日の緊急 : 明日の緊急を表示します。
 	`
+}
+
+func GetHirumeshi() string {
+	var OhiruList []string
+	OhiruList = append(OhiruList, "まるかめし", "カレー", "パスタ", "うどん", "松屋", "魔剤", "丸亀", "まるめし", "コンビニめし", "ぐらたん")
+	randNum := rand.Intn(len(OhiruList))
+	return OhiruList[randNum]
 }
 
 func Omikuji() string {
@@ -188,7 +205,7 @@ func GetEmaList(getKey string) []EmaList {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println("Not Emag Get", err)
+		log.Println("Not Emag Get:", err)
 	}
 	defer resp.Body.Close()
 

@@ -126,7 +126,9 @@ func help() string {
 
 func GetHirumeshi() string {
 	var OhiruList []string
-	OhiruList = append(OhiruList, "まるかめし", "カレー", "パスタ", "うどん", "松屋", "魔剤", "丸亀", "まるめし", "コンビニめし", "ぐらたん")
+	OhiruList = append(OhiruList, "まるかめし", "カレー", "パスタ",
+		"うどん", "松屋", "魔剤", "丸亀", "まるめし", "コンビニめし", "ぐらたん",
+		"ジンギスカン", "ラーメン", "ラーメン", "ラーメン", "カツ丼食えよｫｫｫｫx！！！！")
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
 }

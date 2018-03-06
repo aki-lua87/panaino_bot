@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -67,8 +68,6 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	switch {
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "うらめしえんたんかわいい")):
-		sendMessage(s, c, "うらめしえんたんかわいい")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "お昼")):
 		sendMessage(s, c, GetHirumeshi())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おひる")):
@@ -85,26 +84,10 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おやすみ")):
-		sendMessage(s, c, "おやす§")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "レイスト")):
-		sendMessage(s, c, "レイストちゃんかわいい")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "ちゃんみら")):
-		sendMessage(s, c, "みらめしえんたんとうとい ")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "致した")):
-		sendMessage(s, c, "いためしえんたんしこいい")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "さかい")):
-		sendMessage(s, c, "はげめしえんたんさむいい ")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おこ？")):
-		sendMessage(s, c, "おこめしえんたんこわいい ")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "かわいいね")):
-		sendMessage(s, c, "てれめしえんたんちょろいい ")
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "らんらんひとし")):
-		sendMessage(s, c, "ふぁいあー！！")
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
-		sendMessage(s, c, randMessege())
+		sendMessage(s, c, GetGSS(strings.TrimLeft(m.Content, BotName+" ")))
 	}
 }
 
@@ -228,4 +211,21 @@ type EmaList struct {
 	Date      int    `json:"Date"`
 	Hour      int    `json:"Hour"`
 	Minute    int    `json:"Minute"`
+}
+
+func GetGSS(key string) string {
+	log.Println("get api key: ", key)
+
+	v := url.Values{}
+	v.Set("key", key)
+
+	apiurl := fmt.Sprintf("%s?%s", SSURL, v.Encode())
+
+	resp, err := http.Get(apiurl)
+	if err != nil {
+		return "error"
+	}
+	defer resp.Body.Close()
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+	return string(byteArray)
 }

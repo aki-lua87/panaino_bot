@@ -108,6 +108,9 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "覇者")):
+		text, _ := GetPSO2CoatOfArms()
+		sendMessage(s, c, text)
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "help")):
 		sendMessage(s, c, help())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName)):
@@ -127,6 +130,7 @@ func help() string {
 	大阪の天気 : 大阪付近の天気情報を表示します。
 	お昼：おひるめしえん
 	緊急 : 今日の緊急を表示します。
+	覇者 : 今週の覇者の紋章キャンペーン対象を表示します。
 	明日の緊急 : 明日の緊急を表示します。
 	`
 }
@@ -265,4 +269,35 @@ func GetGSS(key string) string {
 		return res.Text
 	}
 	return randMessege()
+}
+
+func GetPSO2CoatOfArms() (string, error) {
+
+	url := "https://xpow0wu0s5.execute-api.ap-northeast-1.amazonaws.com/v1"
+
+	type respons struct {
+		UpdateTime string   `json:"UpdateTime"`
+		StringList []string `json:"StringList"`
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	byteArray, _ := ioutil.ReadAll(resp.Body)
+	var res respons
+	if err := json.Unmarshal(byteArray, &res); err != nil {
+		log.Println("GetList", err)
+		return "不明なエラーです・・・", err
+	}
+
+	returnText := fmt.Sprintf("今週の覇者の紋章キャンペーンは以下のとおりです... \n \n")
+	for _, v := range res.StringList {
+		returnText = fmt.Sprintf("%s %s \n", returnText, v)
+	}
+	returnText = fmt.Sprintf("%s \n(データ更新 : %s)", returnText, res.UpdateTime)
+
+	return returnText, nil
 }

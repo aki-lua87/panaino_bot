@@ -16,15 +16,39 @@ import (
 )
 
 var (
-	// Token   = "Bot 別ファイルに記述"
-	// BotName = "<@別ファイルに記述>"
 	stopBot   = make(chan bool)
 	vcsession *discordgo.VoiceConnection
+
+	appConfig AppConfig
 )
+
+// AppConfig 設定秘匿情報
+type AppConfig struct {
+	DiscordToken   string `json:"DiscordToken"`
+	BotName        string `json:"BotName"`
+	SpreadsheetURL string `json:"SpreadsheetURL"`
+}
+
+func init() {
+	settingInit()
+}
+
+func settingInit() error {
+	appConfigJSON, err := ioutil.ReadFile("./setting.json")
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	json.Unmarshal(appConfigJSON, &appConfig)
+
+	fmt.Println(appConfig)
+
+	return nil
+}
 
 func main() {
 	discord, err := discordgo.New()
-	discord.Token = Token
+	discord.Token = appConfig.DiscordToken
 	if err != nil {
 		fmt.Println("Error logging in")
 		fmt.Println(err)
@@ -54,13 +78,13 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if nowTime.Month() == 1 {
 		if nowTime.Day() <= 3 {
 			switch {
-			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おみくじ")):
+			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "おみくじ")):
 				sendMessage(s, c, Omikuji())
 				return
-			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "あけおめ")):
+			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "あけおめ")):
 				sendMessage(s, c, "あけおめし")
 				return
-			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "あけましておめでとう")):
+			case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "あけましておめでとう")):
 				sendMessage(s, c, "あけおめし")
 				return
 			}
@@ -68,26 +92,26 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	switch {
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "お昼")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "お昼")):
 		sendMessage(s, c, GetHirumeshi())
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "おひる")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "おひる")):
 		sendMessage(s, c, GetHirumeshi())
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "天気")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "天気")):
 		sendMessage(s, c, GetWether("130010"))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "東京の天気")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "東京の天気")):
 		sendMessage(s, c, GetWether("130010"))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "福岡の天気")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "福岡の天気")):
 		sendMessage(s, c, GetWether("400040")) // 410020
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "大阪の天気")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "大阪の天気")):
 		sendMessage(s, c, GetWether("270000"))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "明日の緊急")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "明日の緊急")):
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "緊急")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", BotName, "help")):
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "help")):
 		sendMessage(s, c, help())
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", BotName)):
-		sendMessage(s, c, GetGSS(strings.TrimLeft(m.Content, BotName+" ")))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName)):
+		sendMessage(s, c, GetGSS(strings.TrimLeft(m.Content, appConfig.BotName+" ")))
 	}
 }
 
@@ -216,16 +240,29 @@ type EmaList struct {
 func GetGSS(key string) string {
 	log.Println("get api key: ", key)
 
+	type respons struct {
+		Result bool   `json:"response"`
+		Text   string `json:"text"`
+	}
+
 	v := url.Values{}
 	v.Set("key", key)
-
-	apiurl := fmt.Sprintf("%s?%s", SSURL, v.Encode())
-
+	apiurl := fmt.Sprintf("%s?%s", appConfig.SpreadsheetURL, v.Encode())
 	resp, err := http.Get(apiurl)
 	if err != nil {
 		return "error"
 	}
 	defer resp.Body.Close()
+
 	byteArray, _ := ioutil.ReadAll(resp.Body)
-	return string(byteArray)
+	var res respons
+	if err := json.Unmarshal(byteArray, &res); err != nil {
+		log.Println("Not Emag List", err)
+		return "不明なエラーです・・・"
+	}
+
+	if res.Result {
+		return res.Text
+	}
+	return randMessege()
 }

@@ -1,2 +1,3 @@
 # panaino_bot
-ぱないの!!のBot
+
+まるめし

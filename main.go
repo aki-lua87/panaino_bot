@@ -27,6 +27,7 @@ type AppConfig struct {
 	DiscordToken   string `json:"DiscordToken"`
 	BotName        string `json:"BotName"`
 	SpreadsheetURL string `json:"SpreadsheetURL"`
+	CoatOfArmsURL  string `json:"CoatOfArmsURL"`
 }
 
 func init() {
@@ -92,6 +93,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	switch {
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "-dev")):
+		sendMessage(s, c, devCmd(m.Content))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "お昼")):
 		sendMessage(s, c, GetHirumeshi())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "おひる")):

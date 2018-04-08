@@ -97,6 +97,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, devCmd(m.Content))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "お昼")):
 		sendMessage(s, c, GetHirumeshi())
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "セリフ")):
+		sendMessage(s, c, appConfig.SpreadsheetURL)
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "おひる")):
 		sendMessage(s, c, GetHirumeshi())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "天気")):
@@ -109,6 +111,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, GetWether("270000"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "明日の緊急")):
 		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "今日の緊急")):
+		sendMessage(s, c, PSO2("今日", time.Now()))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "緊急")):
 		sendMessage(s, c, PSO2("今日", time.Now()))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "覇者")):
@@ -164,7 +168,7 @@ func randMessege() string {
 	// スタンプ
 	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
 	// GOD
-	messageList = append(messageList, "俺は神 ", "まるかめし ", "さむい ")
+	messageList = append(messageList, "俺は神 ", "まるかめし ", "さむい ", "オタク")
 	randNum := rand.Intn(len(messageList))
 	return messageList[randNum]
 }

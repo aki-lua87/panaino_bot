@@ -27,6 +27,7 @@ type AppConfig struct {
 	DiscordToken   string `json:"DiscordToken"`
 	BotName        string `json:"BotName"`
 	SpreadsheetURL string `json:"SpreadsheetURL"`
+	SpreadsheetAPI string `json:"SpreadsheetAPI"`
 	CoatOfArmsURL  string `json:"CoatOfArmsURL"`
 }
 
@@ -258,7 +259,7 @@ func GetGSS(key string) string {
 
 	v := url.Values{}
 	v.Set("key", key)
-	apiurl := fmt.Sprintf("%s?%s", appConfig.SpreadsheetURL, v.Encode())
+	apiurl := fmt.Sprintf("%s?%s", appConfig.SpreadsheetAPI, v.Encode())
 	resp, err := http.Get(apiurl)
 	if err != nil {
 		return "error"

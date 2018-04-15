@@ -77,6 +77,7 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("%20s %20s %20s > %s\n", m.ChannelID, time.Now().Format(time.Stamp), m.Author.Username, m.Content)
 
 	nowTime := time.Now().UTC().Add(time.Hour * 9)
+	fmt.Println("JST now Time > ", nowTime)
 	if nowTime.Month() == 1 {
 		if nowTime.Day() <= 3 {
 			switch {

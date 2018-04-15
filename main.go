@@ -76,7 +76,7 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	fmt.Printf("%20s %20s %20s > %s\n", m.ChannelID, time.Now().Format(time.Stamp), m.Author.Username, m.Content)
 
-	nowTime := time.Now()
+	nowTime := time.Now().UTC().Add(time.Hour * 9)
 	if nowTime.Month() == 1 {
 		if nowTime.Day() <= 3 {
 			switch {
@@ -111,11 +111,11 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "大阪の天気")):
 		sendMessage(s, c, GetWether("270000"))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "明日の緊急")):
-		sendMessage(s, c, PSO2("明日", time.Now().Add(time.Hour*24)))
+		sendMessage(s, c, PSO2("明日", nowTime.Add(time.Hour*24)))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "今日の緊急")):
-		sendMessage(s, c, PSO2("今日", time.Now()))
+		sendMessage(s, c, PSO2("今日", nowTime))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "緊急")):
-		sendMessage(s, c, PSO2("今日", time.Now()))
+		sendMessage(s, c, PSO2("今日", nowTime))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "覇者")):
 		text, _ := GetPSO2CoatOfArms()
 		sendMessage(s, c, text)

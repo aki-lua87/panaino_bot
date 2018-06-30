@@ -99,6 +99,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		sendMessage(s, c, devCmd(m.Content))
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "お昼")):
 		sendMessage(s, c, GetHirumeshi())
+	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "晩飯")):
+		sendMessage(s, c, GetHirumeshi())
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "セリフ")):
 		sendMessage(s, c, appConfig.SpreadsheetURL)
 	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, "おひる")):
@@ -146,7 +148,7 @@ func help() string {
 
 func GetHirumeshi() string {
 	var OhiruList []string
-	OhiruList = append(OhiruList, "まるかめし", "カレー", "パスタ",
+	OhiruList = append(OhiruList, "まるかめし", "カレー", "パスタ","いきなりステーキ",
 		"うどん", "松屋", "魔剤", "丸亀", "まるめし", "コンビニめし", "ぐらたん",
 		"ジンギスカン", "ラーメン", "ラーメン", "ラーメン", "カツ丼食えよｫｫｫｫx！！！！")
 	randNum := rand.Intn(len(OhiruList))

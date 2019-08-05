@@ -17,8 +17,7 @@ var (
 
 	appConfig AppConfig
 
-	ChannelVoiceJoin  = "通話"
-	ChannelVoiceLeave = "もういいよ"
+	discord *discordgo.Session
 )
 
 // AppConfig 設定秘匿情報
@@ -29,6 +28,7 @@ type AppConfig struct {
 	SpreadsheetAPI string `json:"SpreadsheetAPI"` // 会話API
 	CoatOfArmsURL  string `json:"CoatOfArmsURL"`  // 紋章キャンペーン取得API
 	VcID           string `json:"VC_ID"`          // 参加ボイスチャンネルURL
+	TextCannelID   string `json:"TC_ID"`          // 参加テキストチャンネルURL
 }
 
 func init() {
@@ -49,7 +49,8 @@ func settingInit() error {
 }
 
 func main() {
-	discord, err := discordgo.New()
+	var err error
+	discord, err = discordgo.New()
 	discord.Token = appConfig.DiscordToken
 	if err != nil {
 		log.Println("Error logging in")
@@ -57,6 +58,7 @@ func main() {
 	}
 
 	discord.AddHandler(onMessageCreate)
+	discord.AddHandler(onVoiceStateUpdate)
 	// websocket
 	err = discord.Open()
 	if err != nil {
@@ -74,7 +76,6 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		log.Println("Error getting channel: ", err)
 		return
 	}
-	log.Println("%20s %20s %20s > %s\n", m.ChannelID, time.Now().Format(time.Stamp), m.Author.Username, m.Content)
 
 	nowTime := time.Now().UTC().Add(time.Hour * 9)
 	log.Println("JST now Time > ", nowTime)
@@ -95,24 +96,6 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	// まるめしとおはなししたい
-	switch {
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, ChannelVoiceJoin)):
-		vcsession, err = s.ChannelVoiceJoin(c.GuildID, appConfig.VcID, false, false)
-		if err != nil {
-			log.Println("Error Join voice channel: ", err)
-			sendMessage(s, c, err.Error())
-			return
-		}
-		// vcsession.AddHandler(onVoiceReceived) //音声受信時のイベントハンドラ
-		sendMessage(s, c, "まるめし！")
-		return
-	case strings.HasPrefix(m.Content, fmt.Sprintf("%s %s", appConfig.BotName, ChannelVoiceLeave)):
-		vcsession.Disconnect()
-		sendMessage(s, c, "んな～")
-		return
-	}
-
 	// その他一問一答形式メッセージ
 	if strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName)) {
 		sendMessage(s, c, messageCheck(m.Content))
@@ -121,6 +104,19 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingUpdate) {
 
+}
+
+func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
+
+	user, _ := discord.User(vs.UserID)
+	log.Print("new user added : " + user.Username)
+
+	channel, _ := discord.Channel(vs.ChannelID)
+	message := user.Username + "さんが" + channel.Name + "にジョインしました"
+	log.Print(message)
+
+	_, err := s.ChannelMessageSend(appConfig.TextCannelID, message)
+	log.Print(err)
 }
 
 //メッセージを送信

@@ -11,6 +11,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+type UserState struct {
+	Name      string
+	CurrentVC string
+}
+
 var (
 	stopBot   = make(chan bool)
 	vcsession *discordgo.VoiceConnection
@@ -18,6 +23,7 @@ var (
 	appConfig AppConfig
 
 	discord *discordgo.Session
+	usermap = map[string]*UserState{}
 )
 
 // AppConfig 設定秘匿情報
@@ -108,15 +114,39 @@ func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingU
 
 func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 
-	user, _ := discord.User(vs.UserID)
-	log.Print("new user added : " + user.Username)
+	_, ok := usermap[vs.UserID]
+	if !ok {
+		usermap[vs.UserID] = new(UserState)
+		user, err := discord.User(vs.UserID)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		usermap[vs.UserID].Name = user.Username
+		log.Print("new user added : " + user.Username)
+	}
 
-	channel, _ := discord.Channel(vs.ChannelID)
-	message := user.Username + "さんが" + channel.Name + "にジョインしました"
-	log.Print(message)
+	if vs.ChannelID == "" {
+		usermap[vs.UserID].CurrentVC = ""
+		message := usermap[vs.UserID].Name + " が 通話からいなくなったお"
+		_, err := s.ChannelMessageSend(appConfig.TextCannelID, message)
+		if err != nil {
+			log.Println(err)
+		}
+		return
+	}
 
-	_, err := s.ChannelMessageSend(appConfig.TextCannelID, message)
-	log.Print(err)
+	if usermap[vs.UserID].CurrentVC != vs.ChannelID {
+		usermap[vs.UserID].CurrentVC = vs.ChannelID
+		channel, _ := discord.Channel(vs.ChannelID)
+		message := usermap[vs.UserID].Name + " が " + channel.Name + "にジョインしたお"
+		log.Print(message)
+		_, err := s.ChannelMessageSend(appConfig.TextCannelID, message)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+	}
 }
 
 //メッセージを送信

@@ -14,12 +14,16 @@ import (
 
 // 一問一答形式メッセージ
 func messageCheck(message string) string {
+
+	// リファクタリング中
+	if strings.HasPrefix(message, appConfig.BotName) {
+		switch {
+		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ひるめし"):
+			return GetHirumeshi()
+		}
+	}
 	switch {
 	// プログラム的処理が必要なもの
-	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "お昼")):
-		return GetHirumeshi()
-	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "晩飯")):
-		return GetHirumeshi()
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "セリフ")):
 		return appConfig.SpreadsheetURL
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "おひる")):
@@ -105,9 +109,9 @@ func randMessege() string {
 
 func GetHirumeshi() string {
 	var OhiruList []string
-	OhiruList = append(OhiruList, "まるかめし", "カレー", "パスタ", "いきなりステーキ",
-		"うどん", "松屋", "魔剤", "丸亀", "まるめし", "コンビニめし", "ぐらたん",
-		"ジンギスカン", "ラーメン", "ラーメン", "ラーメン", "カツ丼食えよｫｫｫｫx！！！！")
+	OhiruList = append(OhiruList, "丸亀製麺", "吉野家", "松屋", "まつのや", "マクドナルド", "CoCo壱", "富士そば", // 店名
+		"うどん", "ラーメン", "ぐらたん", "居酒屋のやってるランチ営業の日替わり定食", "カレー", // 食べ物名
+		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！") // 虚無
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
 }

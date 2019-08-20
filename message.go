@@ -98,20 +98,22 @@ func randMessege() string {
 	var messageList []string
 	rand.Seed(time.Now().UnixNano())
 	// 基本まるめし構文
-	messageList = append(messageList, "まるい", "り", "それ", "そり", "まるめし", "まるくなりたい", "……。", "ぬくい", "んまー", "マ？", "はやめで", "マァ～")
+	messageList = append(messageList, "まるい", "り", "それ", "そり", "まるめし", "まるくなりたい", "……ｫ'ﾝ", "んまっ！？", "んまー", "マ？", "はやめで", "マァ～")
 	// スタンプ
 	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
 	// GOD
-	messageList = append(messageList, "俺は神 ", "まるかめし ", "さむい ", "オタク")
+	messageList = append(messageList, "俺は神 ", "いや完全にそれになった", "すず", "ぱないの")
 	randNum := rand.Intn(len(messageList))
 	return messageList[randNum]
 }
 
 func GetHirumeshi() string {
 	var OhiruList []string
-	OhiruList = append(OhiruList, "丸亀製麺", "吉野家", "松屋", "まつのや", "マクドナルド", "CoCo壱", "富士そば", // 店名
-		"うどん", "ラーメン", "ぐらたん", "居酒屋のやってるランチ営業の日替わり定食", "カレー", // 食べ物名
-		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！") // 虚無
+	OhiruList = append(OhiruList, "うどん", "蕎麦", "天ぷら蕎麦", "マックのフライドポテト", "ラーメン", "パスタ", // 麺類
+		"カツ丼", "天丼", "カレー", "唐揚げ定食", "寿司", // 飯類
+		"麻婆豆腐", "Spaghetti", "ぐらたん", // 中華とか
+		"https://cookpad.com/recipe/4295725", "白ごはんと漬物とみそ汁", "砂に醤油かけて食ってろ", ":bread: ",  // 虚無1
+		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！") // 虚無2
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
 }

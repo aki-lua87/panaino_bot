@@ -110,10 +110,10 @@ func randMessege() string {
 func GetHirumeshi() string {
 	var OhiruList []string
 	OhiruList = append(OhiruList, "うどん", "蕎麦", "天ぷら蕎麦", "マックのフライドポテト", "ラーメン", "パスタ", // 麺類
-		"カツ丼", "天丼", "カレー", "唐揚げ定食", "寿司", // 飯類
-		"麻婆豆腐", "Spaghetti", "ぐらたん", // 中華とか
+		"カツ丼", "天丼", "カレー", "唐揚げ定食", "寿司", "野菜炒め",  // 飯類
+		"麻婆豆腐", "Spaghetti", "ぐらたん", "ピッツァ","ハンバーグ",// 中華とか
 		"https://cookpad.com/recipe/4295725", "白ごはんと漬物とみそ汁", "砂に醤油かけて食ってろ", ":bread: ",  // 虚無1
-		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！") // 虚無2
+		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！","いきなりステーキ") // 虚無2
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
 }

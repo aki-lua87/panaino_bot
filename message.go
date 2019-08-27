@@ -18,10 +18,12 @@ func messageCheck(message string) string {
 	// リファクタリング中
 	if strings.HasPrefix(message, appConfig.BotName) {
 		switch {
-		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ひるめし"):
+		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"):
 			return GetHirumeshi()
 		case strings.Contains(message, "酒"):
 			return GetSake()
+		case strings.Contains(message, "の実況"):
+			return getTodayJikkyou()
 		}
 	}
 	switch {
@@ -87,7 +89,6 @@ func getHelpMessage() string {
 	return `以下のメンションを投げると反応してくれるよ
 
 	天気 : 関東の天気情報を表示します。
-	福岡の天気 : ちゃんみらの家付近の天気情報を表示します。
 	大阪の天気 : 大阪付近の天気情報を表示します。
 	お昼：おひるめしえん
 	緊急 : 今日の緊急を表示します。
@@ -102,7 +103,7 @@ func randMessege() string {
 	// 基本まるめし構文
 	messageList = append(messageList, "まるい", "り", "それ", "そり", "まるめし", "まるくなりたい", "……ｫ'ﾝ", "んまっ！？", "んまー", "マ？", "はやめで", "マァ～")
 	// スタンプ
-	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
+	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ", ":sanrenjinmentiizu: ")
 	// GOD
 	messageList = append(messageList, "俺は神 ", "いや完全にそれになった", "すず", "ぱないの", "ﾎﾟｸｼﾎﾟｸｼ", "にょわ～", "お前もまるくしてやろうか")
 	randNum := rand.Intn(len(messageList))
@@ -111,10 +112,10 @@ func randMessege() string {
 
 func GetHirumeshi() string {
 	var OhiruList []string
-	OhiruList = append(OhiruList, "うどん", "蕎麦", "天ぷら蕎麦", "マックのフライドポテト", "ラーメン", "パスタ", // 麺類
-		"カツ丼", "天丼", "カレー", "唐揚げ定食", "寿司", "野菜炒め", "クロワッサン", "つけ麺", "", "油そば", // 飯類
-		"麻婆豆腐", "Spaghetti", "ぐらたん", "ピッツァ", "ハンバーグ", // 中華とか
-		"https://cookpad.com/recipe/4295725", "白ごはんと漬物とみそ汁", "砂に醤油かけて食ってろ", ":bread: ", // 虚無1
+	OhiruList = append(OhiruList, "うどん", "蕎麦", "きつねうどん :fox: ", "天ぷら蕎麦", "マックのフライドポテト", "ラーメン", "パスタ", // 麺類
+		"カツ丼", "天丼", "カレー", "ぎゅうどん！", "唐揚げ定食", "寿司", "野菜炒め", "クロワッサン :croissant: ", "つけ麺", "", "油そば", // 飯類
+		"麻婆豆腐", "スパゲッティ", "焼きそば", "ぐらたん", "ピッツァ :pizza: ", "ハンバーグ", // 中華とか
+		"オムライス", "ケバブ :taco: ", "白ごはんと漬物とみそ汁", "砂に醤油かけて食ってろ", ":bread: ", // 虚無1
 		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！", "いきなりステーキ") // 虚無2
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
@@ -130,7 +131,7 @@ func Omikuji() string {
 
 func GetSake() string {
 	var SakeList []string
-	SakeList = append(SakeList, "日本酒", "焼酎", "びーる", "ほろよい", "ストロングゼロ", getHakutsuru())
+	SakeList = append(SakeList, "日本酒", "焼酎", "びーる", "ほろよい", "ワイン", "カシオレ", getHakutsuru(), getHakutsuru(), getHakutsuru(), getHakutsuru())
 	randNum := rand.Intn(len(SakeList))
 	return SakeList[randNum]
 }
@@ -146,4 +147,24 @@ func getHakutsuru() string {
 	)
 	randNum := rand.Intn(len(SakeList))
 	return SakeList[randNum]
+}
+
+func getTodayJikkyou() string {
+	var GameList []string
+	var HitoList []string
+	GameList = append(GameList,
+		"Five Nights at Freddy's",
+		"FF14高難易度",
+		"ソロアルチ",
+		"お絵かき",
+	)
+	HitoList = append(HitoList,
+		"ぽくしさん",
+		"致したさん",
+		"うらめしえんたん",
+		"しろくろ",
+	)
+	randNum1 := rand.Intn(len(GameList))
+	randNum2 := rand.Intn(len(HitoList))
+	return HitoList[randNum2] + "の" + GameList[randNum1] + "実況"
 }

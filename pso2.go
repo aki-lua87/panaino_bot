@@ -61,7 +61,7 @@ func GetPESO2EmergencyQuestString(date string, t time.Time) string {
 func GetPESO2EmergencyQuest(getKey string) []EmaList {
 	client := &http.Client{}
 
-	apiurl := "https://akakitune87.net/api/v4/pso2emergency"
+	apiurl := "https://pso2.akakitune87.net/api/emergency"
 
 	jsonStr := `{"EventDate":"` + getKey + `"}`
 	req, err := http.NewRequest(

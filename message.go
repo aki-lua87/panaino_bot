@@ -18,7 +18,7 @@ func messageCheck(message string) string {
 	// リファクタリング中
 	if strings.HasPrefix(message, appConfig.BotName) {
 		switch {
-		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"):
+		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ばんめし"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"), strings.Contains(message, "夕飯"):
 			return GetHirumeshi()
 		case strings.Contains(message, "酒"):
 			return GetSake()
@@ -49,8 +49,6 @@ func messageCheck(message string) string {
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "覇者")):
 		text, _ := GetPSO2CoatOfArms()
 		return text
-	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "help")):
-		return getHelpMessage()
 	}
 	// マッチしない場合はGoogleスプレッドシート or 基本セットより取得(一問一答形式)
 	return getGSSMessage(strings.TrimLeft(message, appConfig.BotName+" "))
@@ -85,25 +83,13 @@ func getGSSMessage(key string) string {
 	return randMessege()
 }
 
-func getHelpMessage() string {
-	return `以下のメンションを投げると反応してくれるよ
-
-	天気 : 関東の天気情報を表示します。
-	大阪の天気 : 大阪付近の天気情報を表示します。
-	お昼：おひるめしえん
-	緊急 : 今日の緊急を表示します。
-	覇者 : 今週の王者の紋章キャンペーン対象を表示します。
-	明日の緊急 : 明日の緊急を表示します。
-	`
-}
-
 func randMessege() string {
 	var messageList []string
 	rand.Seed(time.Now().UnixNano())
 	// 基本まるめし構文
 	messageList = append(messageList, "まるい", "り", "それ", "そり", "まるめし", "まるくなりたい", "……ｫ'ﾝ", "んまっ！？", "んまー", "マ？", "はやめで", "マァ～")
 	// スタンプ
-	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ", ":sanrenjinmentiizu: ")
+	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
 	// GOD
 	messageList = append(messageList, "俺は神 ", "いや完全にそれになった", "すず", "ぱないの", "ﾎﾟｸｼﾎﾟｸｼ", "にょわ～", "お前もまるくしてやろうか")
 	randNum := rand.Intn(len(messageList))
@@ -115,8 +101,8 @@ func GetHirumeshi() string {
 	OhiruList = append(OhiruList, "うどん", "蕎麦", "きつねうどん :fox: ", "天ぷら蕎麦", "マックのフライドポテト", "ラーメン", "パスタ", // 麺類
 		"カツ丼", "天丼", "カレー", "ぎゅうどん！", "唐揚げ定食", "寿司", "野菜炒め", "クロワッサン :croissant: ", "つけ麺", "", "油そば", // 飯類
 		"麻婆豆腐", "スパゲッティ", "焼きそば", "ぐらたん", "ピッツァ :pizza: ", "ハンバーグ", // 中華とか
-		"オムライス", "ケバブ :taco: ", "白ごはんと漬物とみそ汁", "砂に醤油かけて食ってろ", ":bread: ", // 虚無1
-		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！", "いきなりステーキ") // 虚無2
+		"オムライス", "ケバブ :taco: ", "白ごはんと漬物とみそ汁", "オム・ライス", "日替わり定食 ", // 虚無1
+		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！", "お好み焼き") // 虚無2
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
 }
@@ -131,7 +117,9 @@ func Omikuji() string {
 
 func GetSake() string {
 	var SakeList []string
-	SakeList = append(SakeList, "日本酒", "焼酎", "びーる", "ほろよい", "ワイン", "カシオレ", getHakutsuru(), getHakutsuru(), getHakutsuru(), getHakutsuru())
+	SakeList = append(SakeList, "日本酒", "ハイボール", "ほっぴー", "焼酎", "びーる", "白ワイン", // 種類
+		"ほろよい", "カシオレ", "黒霧島", "綾鷹", "澪", "99.99", // by name
+		getHakutsuru(), getHakutsuru(), getHakutsuru())
 	randNum := rand.Intn(len(SakeList))
 	return SakeList[randNum]
 }

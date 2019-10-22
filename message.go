@@ -28,6 +28,10 @@ func messageCheck(message string) string {
 	}
 	switch {
 	// プログラム的処理が必要なもの
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "mtg")):
+		cardName := strings.TrimLeft(message,appConfig.BotName)
+		cardName = strings.TrimLeft(cardName," mtg ")
+		return FetchHareruyaCards(cardName)
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "セリフ")):
 		return appConfig.SpreadsheetURL
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "おひる")):

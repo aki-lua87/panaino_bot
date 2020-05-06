@@ -30,6 +30,7 @@ var (
 type AppConfig struct {
 	DiscordToken   string `json:"DiscordToken"`   // DiscordBotトークン(要Bot Prefix)
 	BotName        string `json:"BotName"`        // ボット名<@111111122222222333333>
+	BotName2       string `json:"BotName2"`       // 信じられない仕様変更
 	SpreadsheetURL string `json:"SpreadsheetURL"` // スプレッドシートURL
 	SpreadsheetAPI string `json:"SpreadsheetAPI"` // 会話API
 	CoatOfArmsURL  string `json:"CoatOfArmsURL"`  // 紋章キャンペーン取得API
@@ -84,7 +85,7 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	nowTime := time.Now().UTC().Add(time.Hour * 9)
-	log.Println("JST now Time > ", nowTime)
+	log.Println("JST now Time > ", nowTime, ":", m.Content)
 	// 正月限定おみくじタイム
 	if nowTime.Month() == 1 {
 		if nowTime.Day() <= 3 {
@@ -105,6 +106,11 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// その他一問一答形式メッセージ
 	if strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName)) {
 		sendMessage(s, c, messageCheck(m.Content))
+		return
+	}
+	if strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName2)) {
+		sendMessage(s, c, messageCheck(m.Content))
+		return
 	}
 }
 
@@ -113,6 +119,10 @@ func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingU
 }
 
 func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
+
+	// defer func() {
+	// 	s.ChannelMessageSend(appConfig.TextCannelID, "寝るわ！")
+	// }()
 
 	_, ok := usermap[vs.UserID]
 	if !ok {

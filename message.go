@@ -15,22 +15,11 @@ import (
 // 一問一答形式メッセージ
 func messageCheck(message string) string {
 
-	// リファクタリング中
-	if strings.HasPrefix(message, appConfig.BotName) {
-		switch {
-		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ばんめし"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"), strings.Contains(message, "夕飯"):
-			return GetHirumeshi()
-		case strings.Contains(message, "酒"):
-			return GetSake()
-		case strings.Contains(message, "の実況"):
-			return getTodayJikkyou()
-		}
-	}
 	switch {
 	// プログラム的処理が必要なもの
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "mtg")):
-		cardName := strings.TrimLeft(message,appConfig.BotName)
-		cardName = strings.TrimLeft(cardName," mtg ")
+		cardName := strings.TrimLeft(message, appConfig.BotName)
+		cardName = strings.TrimLeft(cardName, " mtg ")
 		return FetchHareruyaCards(cardName)
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName, "セリフ")):
 		return appConfig.SpreadsheetURL
@@ -54,8 +43,64 @@ func messageCheck(message string) string {
 		text, _ := GetPSO2CoatOfArms()
 		return text
 	}
+
+	// クソクソクソクソクソクソクソクソクソクソクソクソ
+	switch {
+	// プログラム的処理が必要なもの
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "mtg")):
+		cardName := strings.TrimLeft(message, appConfig.BotName2)
+		cardName = strings.TrimLeft(cardName, " mtg ")
+		return FetchHareruyaCards(cardName)
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "セリフ")):
+		return appConfig.SpreadsheetURL
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "おひる")):
+		return GetHirumeshi()
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "天気")):
+		return GetWether("130010")
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "東京の天気")):
+		return GetWether("130010")
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "福岡の天気")):
+		return GetWether("400040")
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "大阪の天気")):
+		return GetWether("270000")
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "明日の緊急")):
+		return GetPESO2EmergencyQuestString("明日", time.Now().UTC().Add(time.Hour*9).Add(time.Hour*24))
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "今日の緊急")):
+		return GetPESO2EmergencyQuestString("今日", time.Now().UTC().Add(time.Hour*9))
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "緊急")):
+		return GetPESO2EmergencyQuestString("今日", time.Now().UTC().Add(time.Hour*9))
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", appConfig.BotName2, "覇者")):
+		text, _ := GetPSO2CoatOfArms()
+		return text
+	}
+
+	// リファクタリング中
+	if strings.HasPrefix(message, appConfig.BotName) {
+		switch {
+		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ばんめし"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"), strings.Contains(message, "夕飯"):
+			return GetHirumeshi()
+		case strings.Contains(message, "酒"):
+			return GetSake()
+		case strings.Contains(message, "の実況"):
+			return getTodayJikkyou()
+		}
+		return getGSSMessage(strings.TrimLeft(message, appConfig.BotName+" "))
+	}
+
+	if strings.HasPrefix(message, appConfig.BotName2) {
+		switch {
+		case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ばんめし"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"), strings.Contains(message, "夕飯"):
+			return GetHirumeshi()
+		case strings.Contains(message, "酒"):
+			return GetSake()
+		case strings.Contains(message, "の実況"):
+			return getTodayJikkyou()
+		}
+		return getGSSMessage(strings.TrimLeft(message, appConfig.BotName2+" "))
+	}
+	return getGSSMessage("")
 	// マッチしない場合はGoogleスプレッドシート or 基本セットより取得(一問一答形式)
-	return getGSSMessage(strings.TrimLeft(message, appConfig.BotName+" "))
+
 }
 
 func getGSSMessage(key string) string {
@@ -95,18 +140,46 @@ func randMessege() string {
 	// スタンプ
 	messageList = append(messageList, ":bread: ", ":moyai: ", ":cactus: ")
 	// GOD
-	messageList = append(messageList, "俺は神 ", "いや完全にそれになった", "すず", "ぱないの", "ﾎﾟｸｼﾎﾟｸｼ", "にょわ～", "お前もまるくしてやろうか")
+	messageList = append(messageList, "それになった", "すず", "ぱないの", "ﾎﾟｸｼﾎﾟｸｼ", "にょわ～")
 	randNum := rand.Intn(len(messageList))
 	return messageList[randNum]
 }
 
 func GetHirumeshi() string {
 	var OhiruList []string
-	OhiruList = append(OhiruList, "うどん", "蕎麦", "きつねうどん :fox: ", "天ぷら蕎麦", "マックのフライドポテト", "ラーメン", "パスタ", // 麺類
-		"カツ丼", "天丼", "カレー", "ぎゅうどん！", "唐揚げ定食", "寿司", "野菜炒め", "クロワッサン :croissant: ", "つけ麺", "", "油そば", // 飯類
-		"麻婆豆腐", "スパゲッティ", "焼きそば", "ぐらたん", "ピッツァ :pizza: ", "ハンバーグ", // 中華とか
-		"オムライス", "ケバブ :taco: ", "白ごはんと漬物とみそ汁", "オム・ライス", "日替わり定食 ", // 虚無1
-		"コンビニめし", "魔剤", "日高屋", "カツ丼食えよｫｫｫｫx！！！！", "お好み焼き") // 虚無2
+	OhiruList = append(
+		OhiruList,
+		"うどん",
+		"蕎麦",
+		"きつねうどん :fox: ",
+		"天ぷら蕎麦",
+		"マックのフライドポテト",
+		"ラーメン",
+		"スパゲッティ",
+		"パスタ",
+		"つけ麺",
+		"油そば",
+		"カツ丼",
+		"天丼",
+		"カレー",
+		"ぎゅうどん！",
+		"唐揚げ定食",
+		"寿司",
+		"野菜炒め",
+		"クロワッサン :croissant: ",
+		"麻婆豆腐",
+		"焼きそば",
+		"ぐらたん",
+		"ピッツァ :pizza: ",
+		"ハンバーグ",
+		"オムライス",
+		"ケバブ :taco: ",
+		"白ごはんと漬物とみそ汁",
+		"オム・ライス",
+		"日替わり定食 ",
+		"コンビニめし",
+		"カツ丼食えよｫｫｫｫx！！！！",
+		"お好み焼き")
 	randNum := rand.Intn(len(OhiruList))
 	return OhiruList[randNum]
 }

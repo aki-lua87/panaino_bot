@@ -14,6 +14,7 @@ import (
 type UserState struct {
 	Name      string
 	CurrentVC string
+	Jointime  time.Time
 }
 
 var (
@@ -85,7 +86,8 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	nowTime := time.Now().UTC().Add(time.Hour * 9)
-	log.Println("JST now Time > ", nowTime, ":", m.Content)
+	log.Println(nowTime)
+	fmt.Printf("onMessageCreate :%+v\n", m)
 	// 正月限定おみくじタイム
 	if nowTime.Month() == 1 {
 		if nowTime.Day() <= 3 {
@@ -124,6 +126,10 @@ func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 	// 	s.ChannelMessageSend(appConfig.TextCannelID, "寝るわ！")
 	// }()
 
+	nowTime := time.Now().UTC().Add(time.Hour * 9)
+	log.Println(nowTime)
+	fmt.Printf("onVoiceStateUpdate :%+v\n", vs)
+
 	_, ok := usermap[vs.UserID]
 	if !ok {
 		usermap[vs.UserID] = new(UserState)
@@ -138,7 +144,8 @@ func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 
 	if vs.ChannelID == "" {
 		usermap[vs.UserID].CurrentVC = ""
-		message := usermap[vs.UserID].Name + " が 通話からいなくなったお"
+		time := nowTime.Sub(usermap[vs.UserID].Jointime)
+		message := usermap[vs.UserID].Name + " が 通話からいなくなったお 滞在時間:[" + time.String() + "]"
 		_, err := s.ChannelMessageSend(appConfig.TextCannelID, message)
 		if err != nil {
 			log.Println(err)
@@ -148,6 +155,7 @@ func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 
 	if usermap[vs.UserID].CurrentVC != vs.ChannelID {
 		usermap[vs.UserID].CurrentVC = vs.ChannelID
+		usermap[vs.UserID].Jointime = nowTime
 		channel, _ := discord.Channel(vs.ChannelID)
 		message := usermap[vs.UserID].Name + " が " + channel.Name + "にジョインしたお"
 		log.Print(message)

@@ -53,6 +53,8 @@ func createMessage(message string, botName string) string {
 		return GetWether("400040")
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", botName, "大阪の天気")):
 		return GetWether("270000")
+	case strings.HasPrefix(message, fmt.Sprintf("%s %s", botName, "石川の天気")):
+		return GetWether("170010")
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", botName, "明日の緊急")):
 		return GetPESO2EmergencyQuestString("明日", time.Now().UTC().Add(time.Hour*9).Add(time.Hour*24))
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", botName, "今日の緊急")):

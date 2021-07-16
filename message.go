@@ -40,6 +40,8 @@ func createMessage(message string, botName string) string {
 		return RandMTGjp()
 	case strings.Contains(message, "メカゴジラ"):
 		return getMekaGozzira()
+	case strings.Contains(message, "オセロ"):
+		return getOthello()
 		// ここから未リファクタリング
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", botName, "セリフ")):
 		return appConfig.SpreadsheetURL
@@ -206,4 +208,24 @@ func getMekaGozzira() string {
 	)
 	randNum := rand.Intn(len(List))
 	return List[randNum]
+}
+
+func getOthello() string {
+	form := url.Values{}
+	form.Add("m", "open")
+	body := strings.NewReader(form.Encode())
+	req1, err := http.NewRequest("POST", "https://el-ement.com/blog/wp-content/uploads/moonrev/api.php", body)
+	if err != nil {
+		fmt.Println(err)
+		return "エラー"
+	}
+	req1.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	cli := new(http.Client)
+	resp, err := cli.Do(req1)
+	if err == nil {
+		defer resp.Body.Close()
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	text := "https://el-ement.com/blog/wp-content/uploads/moonrev/#" + string(b)
+	return text
 }

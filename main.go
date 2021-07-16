@@ -145,7 +145,9 @@ func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 	if vs.ChannelID == "" {
 		usermap[vs.UserID].CurrentVC = ""
 		time := nowTime.Sub(usermap[vs.UserID].Jointime)
-		message := usermap[vs.UserID].Name + " が 通話からいなくなったお 滞在時間:[" + time.String() + "]"
+		slice := strings.Split(time.String(), ".")
+		timeString := slice[0]
+		message := usermap[vs.UserID].Name + " が 通話からいなくなったお 滞在時間:[" + timeString + "s]"
 		_, err := s.ChannelMessageSend(appConfig.TextCannelID, message)
 		if err != nil {
 			log.Println(err)

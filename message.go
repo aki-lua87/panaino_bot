@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -28,7 +28,7 @@ func createMessage(message string, botName string) string {
 	switch {
 	case strings.HasPrefix(message, fmt.Sprintf("%s %s", botName, "晴れる屋")):
 		cardName := strings.TrimLeft(message, botName)
-		cardName = strings.TrimLeft(cardName, " 晴れる屋 ")
+		cardName = strings.TrimLeft(cardName, " 晴れる屋")
 		return FetchHareruyaCards(cardName)
 	case strings.Contains(message, "お昼"), strings.Contains(message, "昼飯"), strings.Contains(message, "晩飯"), strings.Contains(message, "ばんめし"), strings.Contains(message, "ひるめし"), strings.Contains(message, "おひる"), strings.Contains(message, "夕飯"):
 		return GetHirumeshi()
@@ -85,12 +85,23 @@ func getGSSMessage(key string) string {
 	if err != nil {
 		return "error"
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-	byteArray, _ := ioutil.ReadAll(resp.Body)
+	byteArray, _ := io.ReadAll(resp.Body)
+	log.Printf("API Response: %s", string(byteArray))
+
+	// HTMLレスポンスの場合はAPIエラー
+	if strings.Contains(string(byteArray), "<!DOCTYPE html>") {
+		log.Printf("API認証エラー: HTMLレスポンスが返されました")
+		return randMessege()
+	}
+
 	var res respons
 	if err := json.Unmarshal(byteArray, &res); err != nil {
-		return "不明なエラーです・・・"
+		log.Printf("JSONパースエラー: %v", err)
+		return randMessege()
 	}
 
 	if res.Result {
@@ -101,7 +112,6 @@ func getGSSMessage(key string) string {
 
 func randMessege() string {
 	var messageList []string
-	rand.Seed(time.Now().UnixNano())
 	// 基本まるめし構文
 	messageList = append(messageList, "まるい", "り", "それ", "そり", "まるめし", "まるくなりたい", "……ｫ'ﾝ", "んまっ！？", "んまー", "マ？", "はやめで", "マァ～")
 	// スタンプ
@@ -153,7 +163,6 @@ func GetHirumeshi() string {
 
 func Omikuji() string {
 	var OmikujiList []string
-	rand.Seed(time.Now().UnixNano())
 	OmikujiList = append(OmikujiList, "大吉", "中吉", "吉", "小吉", "凶", "大凶", "まるめし吉", "はずれ")
 	randNum := rand.Intn(len(OmikujiList))
 	return OmikujiList[randNum]
@@ -192,7 +201,6 @@ func getTodayJikkyou() string {
 	)
 	HitoList = append(HitoList,
 		"ぽくしさん",
-		"致したさん",
 		"うらめしえんたん",
 		"しろくろ",
 	)
@@ -222,10 +230,17 @@ func getOthello() string {
 	req1.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	cli := new(http.Client)
 	resp, err := cli.Do(req1)
-	if err == nil {
-		defer resp.Body.Close()
+	if err != nil {
+		return "エラー"
 	}
-	b, err := ioutil.ReadAll(resp.Body)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "エラー"
+	}
 	text := "https://el-ement.com/blog/wp-content/uploads/moonrev/#" + string(b)
 	return text
 }

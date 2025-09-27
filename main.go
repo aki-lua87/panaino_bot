@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -18,8 +18,7 @@ type UserState struct {
 }
 
 var (
-	stopBot   = make(chan bool)
-	vcsession *discordgo.VoiceConnection
+	stopBot = make(chan bool)
 
 	appConfig AppConfig
 
@@ -45,7 +44,7 @@ func init() {
 
 func settingInit() error {
 	// AppConfig用Settingファイル読み込み
-	appConfigJSON, err := ioutil.ReadFile("./setting.json")
+	appConfigJSON, err := os.ReadFile("./setting.json")
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -58,8 +57,7 @@ func settingInit() error {
 
 func main() {
 	var err error
-	discord, err = discordgo.New()
-	discord.Token = appConfig.DiscordToken
+	discord, err = discordgo.New(appConfig.DiscordToken)
 	if err != nil {
 		log.Println("Error logging in")
 		log.Println(err)
@@ -75,7 +73,6 @@ func main() {
 
 	log.Println("Listening...")
 	<-stopBot
-	return
 }
 
 func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -106,19 +103,16 @@ func onMessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	// その他一問一答形式メッセージ
-	if strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName)) {
+	if strings.HasPrefix(m.Content, appConfig.BotName) {
 		sendMessage(s, c, messageCheck(m.Content))
 		return
 	}
-	if strings.HasPrefix(m.Content, fmt.Sprintf("%s", appConfig.BotName2)) {
+	if strings.HasPrefix(m.Content, appConfig.BotName2) {
 		sendMessage(s, c, messageCheck(m.Content))
 		return
 	}
 }
 
-func onVoiceReceived(vc *discordgo.VoiceConnection, vs *discordgo.VoiceSpeakingUpdate) {
-
-}
 
 func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 
@@ -169,7 +163,7 @@ func onVoiceStateUpdate(s *discordgo.Session, vs *discordgo.VoiceStateUpdate) {
 	}
 }
 
-//メッセージを送信
+// メッセージを送信
 func sendMessage(s *discordgo.Session, c *discordgo.Channel, msg string) {
 	_, err := s.ChannelMessageSend(c.ID, msg)
 

@@ -1,0 +1,29 @@
+[Unit]
+Description=Panaino Discord Bot (multiple guilds)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+StartLimitInterval=60
+StartLimitBurst=5
+User=panaino-bot
+WorkingDirectory=/opt/panaino-bot
+EnvironmentFile=/opt/panaino-bot/bot.env
+ExecStart=/opt/panaino-bot/panaino-bot
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+# The DB and its journal must be writable by the service user.
+ReadWriteDirectories=/opt/panaino-bot
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

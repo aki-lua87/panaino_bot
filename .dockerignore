@@ -1,0 +1,9 @@
+.git
+setting.json
+config.json
+bot.env
+.env
+*.log
+dist
+marumeshi_bot
+panaino_bot

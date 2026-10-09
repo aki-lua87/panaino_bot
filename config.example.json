@@ -1,0 +1,22 @@
+{
+  "guilds": {
+    "111111111111111111": {
+      "voice_text_channel_id": "111111111111111112",
+      "voice_channel_ids": [],
+      "spreadsheet_url": "",
+      "spreadsheet_api": "",
+      "fallback_reply": "まるめし",
+      "coat_of_arms_url": "https://xpow0wu0s5.execute-api.ap-northeast-1.amazonaws.com/v1",
+      "emergency_url": "https://pso2.akakitune87.net/api/emergency"
+    },
+    "222222222222222222": {
+      "voice_text_channel_id": "222222222222222223",
+      "voice_channel_ids": [],
+      "spreadsheet_url": "",
+      "spreadsheet_api": "",
+      "fallback_reply": "まるめし",
+      "coat_of_arms_url": "https://xpow0wu0s5.execute-api.ap-northeast-1.amazonaws.com/v1",
+      "emergency_url": "https://pso2.akakitune87.net/api/emergency"
+    }
+  }
+}

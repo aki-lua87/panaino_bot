@@ -1,3 +1,14 @@
 hide.go
 setting.json
 .idea/
+config.json
+bot.env
+.env
+dist/
+marumeshi_bot
+panaino_bot
+*.exe
+*.log
+nohup.out
+__pycache__/
+*.pyc

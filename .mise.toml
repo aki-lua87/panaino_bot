@@ -1,10 +1,10 @@
 [tools]
-go = "1.25.1"
+go = "1.26.8"
 
 [tasks.build]
-run = "go build -o marumeshi_bot ."
+run = "go build -o dist/panaino-bot ."
 description = "通常ビルド"
 
 [tasks.build-static]
-run = "CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags \"-static\"' -o marumeshi_bot ."
+run = "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOAMD64=v1 go build -trimpath -o dist/panaino-bot ."
 description = "静的リンクビルド（古いGLIBC対応）"

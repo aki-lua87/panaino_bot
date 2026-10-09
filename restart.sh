@@ -4,9 +4,9 @@ echo build
 go build
 
 echo kill
-ps -ef | grep -E "panaino_bot" | grep -v grep | awk '{print "kill", $2}' | sh
+ps -ef | grep -E "marumeshi_bot" | grep -v grep | awk '{print "kill", $2}' | sh
 
 echo start
-nohup ./panaino_bot > `date "+%Y%m%d"`.log & 
+nohup ./marumeshi_bot > `date "+%Y%m%d"`.log & 
 
 echo finish

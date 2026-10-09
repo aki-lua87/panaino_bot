@@ -1,16 +1,14 @@
-FROM golang:latest
+FROM golang:1.26.8-bookworm AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY main.go ./
+COPY internal ./internal
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOAMD64=v1 go build -mod=readonly -trimpath -ldflags='-s -w' -o /panaino-bot .
 
-# go get
-RUN go get github.com/bwmarrin/discordgo
-
-# source get
-RUN mkdir /marumesi
-COPY ./weather.go /marumesi/
-COPY ./main.go /marumesi/
-COPY ./devcmd.go /marumesi/
-COPY ./setting.json /marumesi/
-
-# build
-WORKDIR /marumesi
-RUN go build
-ENTRYPOINT /marumesi/marumesi
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=build /panaino-bot /usr/local/bin/panaino-bot
+USER 65534:65534
+ENTRYPOINT ["/usr/local/bin/panaino-bot"]
+CMD ["--config", "/config/config.json"]

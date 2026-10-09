@@ -12,6 +12,7 @@ import (
 
 	"github.com/aki-lua87/marumeshi_bot/internal/config"
 	"github.com/aki-lua87/marumeshi_bot/internal/features"
+	"github.com/aki-lua87/marumeshi_bot/internal/storage"
 	"github.com/aki-lua87/marumeshi_bot/internal/voice"
 	"github.com/bwmarrin/discordgo"
 )
@@ -19,23 +20,55 @@ import (
 type outgoing struct {
 	guildID, channelID, text string
 	prepared                 bool
+	voice                    bool
 }
 
 type Bot struct {
-	cfg     config.Config
-	engine  features.Engine
-	voice   *voice.Tracker
-	ctx     context.Context
-	logger  *slog.Logger
-	id      atomic.Value
-	queue   chan outgoing
-	workers sync.WaitGroup
+	cfg        config.Config
+	cfgMu      sync.RWMutex
+	settingsMu sync.Mutex
+	store      *storage.Store
+	tasks      chan func(*discordgo.Session)
+	engine     features.Engine
+	voice      *voice.Tracker
+	ctx        context.Context
+	logger     *slog.Logger
+	id         atomic.Value
+	queue      chan outgoing
+	workers    sync.WaitGroup
 }
 
 func New(ctx context.Context, cfg config.Config, engine features.Engine, logger *slog.Logger) *Bot {
-	b := &Bot{cfg: cfg, engine: engine, voice: voice.New(), ctx: ctx, logger: logger, queue: make(chan outgoing, 128)}
+	if cfg.Guilds == nil {
+		cfg.Guilds = map[string]config.Guild{}
+	}
+	b := &Bot{cfg: cfg, engine: engine, voice: voice.New(), ctx: ctx, logger: logger, queue: make(chan outgoing, 128), tasks: make(chan func(*discordgo.Session), 32)}
 	b.id.Store("")
 	return b
+}
+
+func (b *Bot) AttachStore(store *storage.Store) { b.store = store }
+func (b *Bot) guild(id string) (config.Guild, bool) {
+	b.cfgMu.RLock()
+	defer b.cfgMu.RUnlock()
+	g, ok := b.cfg.Guilds[id]
+	return g, ok
+}
+func (b *Bot) setGuild(id string, g config.Guild) {
+	b.cfgMu.Lock()
+	defer b.cfgMu.Unlock()
+	b.cfg.Guilds[id] = g
+}
+func (b *Bot) task(work func(*discordgo.Session)) bool {
+	if b.ctx.Err() != nil {
+		return false
+	}
+	select {
+	case b.tasks <- work:
+		return true
+	default:
+		return false
+	}
 }
 
 func (b *Bot) Register(s *discordgo.Session) {
@@ -48,6 +81,7 @@ func (b *Bot) Register(s *discordgo.Session) {
 	s.AddHandler(b.onGuildDelete)
 	s.AddHandler(b.onMessage)
 	s.AddHandler(b.onVoice)
+	s.AddHandler(b.onInteraction)
 	s.AddHandler(func(_ *discordgo.Session, _ *discordgo.Disconnect) {
 		b.logger.Warn("Discordとの接続が切れました。再接続を待ちます")
 	})
@@ -63,6 +97,18 @@ func (b *Bot) Register(s *discordgo.Session) {
 			}
 		}
 	}()
+	b.workers.Add(1)
+	go func() {
+		defer b.workers.Done()
+		for {
+			select {
+			case <-b.ctx.Done():
+				return
+			case work := <-b.tasks:
+				work(s)
+			}
+		}
+	}()
 }
 
 func (b *Bot) Wait() { b.workers.Wait() }
@@ -73,17 +119,63 @@ func (b *Bot) onReady(_ *discordgo.Session, ready *discordgo.Ready) {
 	}
 	b.id.Store(ready.User.ID)
 	// A non-resumable reconnect loses timing continuity. Do not retain stale durations.
+	b.cfgMu.RLock()
 	for guildID := range b.cfg.Guilds {
 		b.voice.Seed(guildID, nil)
 	}
 	b.logger.Info("Discordに接続しました", "bot_id", ready.User.ID, "configured_guilds", len(b.cfg.Guilds))
+	b.cfgMu.RUnlock()
+	if b.store != nil {
+		// READY lists all joined guilds, including temporarily unavailable ones.
+		// Archive guilds removed while this process was offline.
+		joined := map[string]bool{}
+		for _, guild := range ready.Guilds {
+			if guild != nil {
+				joined[guild.ID] = true
+			}
+		}
+		b.settingsMu.Lock()
+		b.cfgMu.RLock()
+		var missing []string
+		for id := range b.cfg.Guilds {
+			if !joined[id] {
+				missing = append(missing, id)
+			}
+		}
+		b.cfgMu.RUnlock()
+		for _, id := range missing {
+			if err := b.store.LeaveGuild(id); err != nil {
+				b.logger.Error("退出済みサーバの設定を更新できません", "guild_id", id)
+				continue
+			}
+			b.cfgMu.Lock()
+			delete(b.cfg.Guilds, id)
+			b.cfgMu.Unlock()
+		}
+		b.settingsMu.Unlock()
+		b.task(func(s *discordgo.Session) { b.registerCommands(s, ready.User.ID) })
+	}
 }
 
 func (b *Bot) onGuildCreate(s *discordgo.Session, event *discordgo.GuildCreate) {
 	if event.Guild == nil {
 		return
 	}
-	g, ok := b.cfg.Guilds[event.ID]
+	g, ok := b.guild(event.ID)
+	created := false
+	if b.store != nil {
+		b.settingsMu.Lock()
+		var err error
+		g, created, err = b.store.EnsureGuild(event.ID)
+		if err != nil {
+			b.settingsMu.Unlock()
+			b.logger.Error("サーバ設定を保存できません", "guild_id", event.ID)
+			return
+		}
+		b.setGuild(event.ID, g)
+		b.settingsMu.Unlock()
+		ok = true
+	}
 	if !ok {
 		return
 	}
@@ -101,11 +193,25 @@ func (b *Bot) onGuildCreate(s *discordgo.Session, event *discordgo.GuildCreate) 
 		}
 	}
 	b.logger.Info("対象サーバの状態を取得しました", "guild_id", event.ID)
+	if created && event.SystemChannelID != "" {
+		b.enqueue(outgoing{guildID: event.ID, channelID: event.SystemChannelID, text: "招待ありがとう！サーバー管理権限を持つ人が /setup を実行して、VC通知先を選んでね。", prepared: true})
+	}
 }
 
 func (b *Bot) onGuildDelete(_ *discordgo.Session, event *discordgo.GuildDelete) {
 	if event.Guild != nil {
 		b.voice.Seed(event.ID, nil)
+		if b.store != nil && !event.Unavailable {
+			b.settingsMu.Lock()
+			defer b.settingsMu.Unlock()
+			if err := b.store.LeaveGuild(event.ID); err != nil {
+				b.logger.Error("サーバ退出を保存できません", "guild_id", event.ID)
+				return
+			}
+			b.cfgMu.Lock()
+			delete(b.cfg.Guilds, event.ID)
+			b.cfgMu.Unlock()
+		}
 	}
 }
 
@@ -126,7 +232,7 @@ func (b *Bot) onMessage(_ *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Message == nil || m.Author == nil || m.Author.Bot || m.WebhookID != "" {
 		return
 	}
-	if _, ok := b.cfg.Guilds[m.GuildID]; !ok {
+	if _, ok := b.guild(m.GuildID); !ok {
 		return
 	}
 	text, mentioned := MentionText(m.Content, b.id.Load().(string))
@@ -150,7 +256,14 @@ func (b *Bot) enqueue(message outgoing) {
 func (b *Bot) process(s *discordgo.Session, message outgoing) {
 	ctx, cancel := context.WithTimeout(b.ctx, 15*time.Second)
 	defer cancel()
-	g := b.cfg.Guilds[message.guildID]
+	g, ok := b.guild(message.guildID)
+	if !ok {
+		return
+	}
+	// Do not deliver queued notifications to an old destination after settings change.
+	if message.prepared && message.voice && message.channelID != g.VoiceTextChannelID {
+		return
+	}
 	text := message.text
 	var err error
 	if !message.prepared {
@@ -213,7 +326,7 @@ func (b *Bot) onVoice(s *discordgo.Session, event *discordgo.VoiceStateUpdate) {
 	if event.VoiceState == nil {
 		return
 	}
-	g, ok := b.cfg.Guilds[event.GuildID]
+	g, ok := b.guild(event.GuildID)
 	if !ok || g.VoiceTextChannelID == "" || event.UserID == b.id.Load().(string) {
 		return
 	}
@@ -266,5 +379,5 @@ func (b *Bot) onVoice(s *discordgo.Session, event *discordgo.VoiceStateUpdate) {
 		text += fmt.Sprintf(" 滞在時間:[%s]", change.Duration.String())
 	}
 	// Voice notifications already contain the final reply; use a separate queue kind.
-	b.enqueue(outgoing{guildID: event.GuildID, channelID: g.VoiceTextChannelID, text: text, prepared: true})
+	b.enqueue(outgoing{guildID: event.GuildID, channelID: g.VoiceTextChannelID, text: text, prepared: true, voice: true})
 }

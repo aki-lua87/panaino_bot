@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sqlite3
 import subprocess
 import tempfile
 import unittest
@@ -103,7 +104,8 @@ exec /usr/bin/readlink "$@"
         env = dict(self.env, **extra)
         result = subprocess.run(["bash", str(self.install / "update.sh")] + list(args), env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         self.assertNotIn("fake-private-token", result.stdout)
-        self.assertEqual((self.install / "config.json").read_text(), '{"guilds":{}}')
+        if (self.install / "config.json").exists():
+            self.assertEqual((self.install / "config.json").read_text(), '{"guilds":{}}')
         self.assertEqual((self.install / "bot.env").read_text(), "DISCORD_TOKEN=fake-private-token\n")
         return result
 
@@ -122,6 +124,41 @@ exec /usr/bin/readlink "$@"
         result = self.run_update("--rollback")
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual((self.install / "panaino-bot").resolve(), self.old)
+
+    def test_database_is_backed_up_and_never_replaced(self):
+        path = self.install / "bot.db"
+        connection = sqlite3.connect(str(path))
+        connection.execute('CREATE TABLE settings (guild_id TEXT, channel TEXT)')
+        connection.execute("INSERT INTO settings VALUES ('123','124')")
+        connection.commit()
+        connection.close()
+        original = path.read_bytes()
+        result = self.run_update()
+        self.assertEqual(result.returncode, 0, result.stdout)
+        backups = list((self.install / "backups").glob('*.db'))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), original)
+        self.assertEqual(path.read_bytes(), original)
+        result = self.run_update("--rollback")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(path.read_bytes(), original)
+
+    def test_backup_failure_prevents_restart(self):
+        connection = sqlite3.connect(str(self.install / "bot.db"))
+        connection.execute('PRAGMA journal_mode=WAL')
+        connection.execute('CREATE TABLE settings (guild_id TEXT)')
+        connection.commit()
+        connection.close()
+        result = self.run_update()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual((self.install / "panaino-bot").resolve(), self.old)
+        self.assertNotIn('restart', self.log.read_text())
+
+    def test_fresh_setup_does_not_require_json(self):
+        (self.install / "config.json").unlink()
+        result = self.run_update("--stage")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertFalse((self.install / "config.json").exists())
 
     def test_failure_modes_leave_or_restore_current(self):
         for flag in ("FAIL_DOWNLOAD", "FAIL_CONFIG", "FAIL_DISCORD", "FAIL_RESTART", "FAIL_HEALTH"):

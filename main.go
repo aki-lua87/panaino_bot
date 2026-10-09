@@ -20,6 +20,7 @@ import (
 	"github.com/aki-lua87/marumeshi_bot/internal/config"
 	"github.com/aki-lua87/marumeshi_bot/internal/features"
 	"github.com/aki-lua87/marumeshi_bot/internal/integrations"
+	"github.com/aki-lua87/marumeshi_bot/internal/storage"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -39,7 +40,10 @@ func main() {
 }
 
 func run(logger *slog.Logger) error {
-	path := flag.String("config", "config.json", "サーバ別設定のJSONファイル")
+	path := flag.String("config", "config.json", "初回に取り込む旧JSON設定（移行後は不要）")
+	dbPath := flag.String("db", "bot.db", "サーバ別設定のSQLiteファイル")
+	backup := flag.String("backup-db", "", "DBの整合性を保ったバックアップを作成して終了")
+	migrate := flag.Bool("migrate-config", false, "旧JSONをDBへ一度だけ取り込んで終了（Discord接続なし）")
 	check := flag.Bool("check", false, "設定だけを検証（Discord接続なし、トークン不要）")
 	checkDiscord := flag.Bool("check-discord", false, "Botの参加先と通知チャンネルをREST APIで検証（投稿なし）")
 	diagnose := flag.Bool("diagnose", false, "実行環境・DNS・TLSを確認（Discordログインなし）")
@@ -77,9 +81,22 @@ func run(logger *slog.Logger) error {
 	if *diagnose {
 		return diagnoseRuntime(logger)
 	}
-	cfg, err := config.Load(*path)
+	cfg, store, err := loadSettings(*dbPath, *path, *check || *checkDiscord || *backup != "")
 	if err != nil {
 		return err
+	}
+	if store != nil {
+		defer store.Close()
+	}
+	if *migrate {
+		logger.Info("設定DBを準備しました", "guilds", len(cfg.Guilds))
+		return nil
+	}
+	if *backup != "" {
+		if store == nil {
+			return errors.New("バックアップ対象のDBがありません")
+		}
+		return store.Backup(*backup)
 	}
 	if *check {
 		logger.Info("設定の検証が完了しました", "guilds", len(cfg.Guilds))
@@ -100,6 +117,7 @@ func run(logger *slog.Logger) error {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	b := bot.New(ctx, cfg, features.Engine{API: integrations.New()}, logger)
+	b.AttachStore(store)
 	b.Register(s)
 	if err := s.Open(); err != nil {
 		cancel()
@@ -114,6 +132,51 @@ func run(logger *slog.Logger) error {
 		return errors.New("Discord接続の終了処理に失敗しました")
 	}
 	return nil
+}
+
+// Checks never create/migrate the live DB; first startup imports the legacy JSON once.
+func loadSettings(dbPath, jsonPath string, readOnly bool) (config.Config, *storage.Store, error) {
+	cfg := config.Config{Guilds: map[string]config.Guild{}}
+	_, err := os.Stat(dbPath)
+	if readOnly && os.IsNotExist(err) {
+		if _, err = os.Stat(jsonPath); os.IsNotExist(err) {
+			return cfg, nil, nil
+		}
+		cfg, err = config.Load(jsonPath)
+		return cfg, nil, err
+	}
+	store, err := storage.Open(dbPath, readOnly)
+	if err != nil {
+		return cfg, nil, errors.New("設定DBを開けません（権限・整合性・対応バージョンを確認してください）")
+	}
+	fail := func(err error) (config.Config, *storage.Store, error) { store.Close(); return cfg, nil, err }
+	imported, err := store.Imported()
+	if err != nil {
+		return fail(err)
+	}
+	if !imported {
+		if _, err = os.Stat(jsonPath); err == nil {
+			legacy, err := config.Load(jsonPath)
+			if err != nil {
+				return fail(err)
+			}
+			if readOnly {
+				cfg = legacy
+			} else if err = store.Import(legacy); err != nil {
+				return fail(err)
+			}
+		} else if !os.IsNotExist(err) {
+			return fail(errors.New("旧設定ファイルを確認できません"))
+		}
+	}
+	snapshot, err := store.Snapshot()
+	if err != nil {
+		return fail(err)
+	}
+	for id, g := range snapshot.Guilds {
+		cfg.Guilds[id] = g
+	}
+	return cfg, store, nil
 }
 
 func inspectDiscord(s *discordgo.Session, cfg config.Config, logger *slog.Logger) error {

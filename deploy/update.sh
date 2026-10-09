@@ -33,7 +33,6 @@ repo=aki-lua87/panaino_bot
 for command in curl python3 sha256sum flock readlink mktemp; do
     command -v "$command" >/dev/null || fail "Missing command: $command"
 done
-[[ -f "$config_file" ]] || fail 'config.json is required'
 exec 9>"$install_dir/.update.lock"
 flock -n 9 || fail 'Another update is running'
 mkdir -p "$install_dir/releases"
@@ -89,7 +88,9 @@ download() {
 }
 
 check_candidate() {
-    "$1" --config "$config_file" --check
+    # Database defaults to bot.db in the install directory, including when invoked
+    # from a separate Git clone. Checks must not create or migrate the live DB.
+    (cd "$install_dir" && "$1" --config "$config_file" --check)
     if [[ "$mode" == stage ]]; then return; fi
     [[ -f "$env_file" ]] || fail 'bot.env is required'
     # Parse the token without sourcing shell code, printing it, or putting it in argv.
@@ -113,7 +114,7 @@ try:
         raise ValueError()
     env = os.environ.copy()
     env['DISCORD_TOKEN'] = token
-    sys.exit(subprocess.call([sys.argv[1], '--config', sys.argv[2], '--check-discord'], env=env))
+    sys.exit(subprocess.call([sys.argv[1], '--config', sys.argv[2], '--check-discord'], env=env, cwd=os.path.dirname(sys.argv[2])))
 except Exception:
     print('Could not validate bot.env/Discord settings (details suppressed).', file=sys.stderr)
     sys.exit(1)
@@ -183,6 +184,29 @@ if [[ "$mode" == stage ]]; then
 fi
 if [[ "$mode" == rollback ]]; then check_candidate "$candidate"; fi
 if [[ "$candidate" == "$old_target" ]]; then echo 'Already running this version.'; exit 0; fi
+
+# Preserve a consistent pre-update snapshot, including on Python 3.5 where
+# Connection.backup is unavailable. DELETE journaling is required for this copy.
+if [[ -f "$install_dir/bot.db" ]]; then
+    mkdir -p "$install_dir/backups"
+    db_backup="$install_dir/backups/bot-$(date -u +%Y%m%dT%H%M%SZ)-$$.db"
+    python3 - "$install_dir/bot.db" "$db_backup" <<'PY'
+import os, shutil, sqlite3, sys
+connection = sqlite3.connect(sys.argv[1], timeout=10)
+try:
+    connection.execute('BEGIN IMMEDIATE')
+    if connection.execute('PRAGMA journal_mode').fetchone()[0] != 'delete':
+        sys.exit('Cannot back up a database using a different journal mode.')
+    if os.path.exists(sys.argv[2]):
+        sys.exit('Backup destination already exists.')
+    shutil.copyfile(sys.argv[1], sys.argv[2])
+    os.chmod(sys.argv[2], 0o600)
+finally:
+    connection.rollback()
+    connection.close()
+PY
+    echo "Database backup: $db_backup"
+fi
 
 # Keep a durable copy even when upgrading an earlier regular-file installation.
 if [[ "$old_target" != "$install_dir/releases/"* ]]; then

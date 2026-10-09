@@ -18,7 +18,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Verify formatting
-        run: test -z "$(gofmt -l main.go main_test.go internal)"
+        run: test -z "$(gofmt -l main.go main_test.go settings_test.go internal)"
       - run: go mod verify
       - run: go test -race ./...
       - run: go vet ./...

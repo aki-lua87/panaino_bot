@@ -11,4 +11,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY --from=build /panaino-bot /usr/local/bin/panaino-bot
 USER 65534:65534
 ENTRYPOINT ["/usr/local/bin/panaino-bot"]
-CMD ["--config", "/config/config.json"]
+WORKDIR /data
+CMD ["--db", "/data/bot.db", "--config", "/data/config.json"]

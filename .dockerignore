@@ -1,9 +1,14 @@
 .git
+hide.go
 setting.json
 config.json
 bot.env
 .env
 *.log
 dist
+*.db*
+backups
+private-notes
+docs
 marumeshi_bot
 panaino_bot

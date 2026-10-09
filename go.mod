@@ -1,6 +1,6 @@
 module github.com/aki-lua87/marumeshi_bot
 
-go 1.26.8
+go 1.26.9
 
 require (
 	github.com/bwmarrin/discordgo v0.29.0
